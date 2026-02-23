@@ -28,31 +28,13 @@ module _ {X : Set} where
   /u\-unique (u -,^ x) (v -,^ .x) with r~ <- /u\-unique u v = r~
   /u\-unique (u -,  x) (v -, .x)  with r~ <- /u\-unique u v = r~
 
-  -- cop using let.. in
-  -- does this even make sense?
-  -- idk why it doesn't work with copatterns + with
+  -- @wenkokke has figured this out
   cop2 : forall {de om xi : Bwd X}
-           (th : de <= om)
-           (ph : xi <= om)
-         -> Cop th ph
+         (th : de <= om)
+         (ph : xi <= om)
+      -> Cop th ph
 
-  cop2 [] [] = [] </\> [] , []
-
-  cop2 (th -^ x) (ph -^ .x) =
-    let r = cop2 th ph
-    in r .fst .ltri -^ x </\> r .fst .rtri -^ x , r .snd
-
-  cop2 (th -^ x) (ph -, .x) =
-    let r = cop2 th ph
-    in r .fst .ltri -^, x </\> r .fst .rtri -, x , r .snd -^, x
-
-  cop2 (th -, x) (ph -^ .x) =
-    let r = cop2 th ph
-    in r .fst .ltri -, x </\> r .fst .rtri -^, x , r .snd -,^ x
-
-  cop2 (th -, x) (ph -, .x) =
-    let r = cop2 th ph
-    in r .fst .ltri -, x </\> r .fst .rtri -, x , r .snd -, x
+  cop2 th ph = cop th ph .fst
 
   -- cannonical grothendieck covering transitivity for left-skip/right-keep
   -- induction on both inner covering and spine covering
@@ -197,5 +179,3 @@ module _ {X : Set} (C : Sort X -> X -> Set) where
                (s1 : (_ , th1 , sg) %% br1)
             -> roof s0 u s1 ~ roof-groth s0 u s1
   roof-equiv s0 u s1 = /u\-unique _ _
-
-
