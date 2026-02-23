@@ -29,50 +29,14 @@ module _ {X : Set} where
   /u\-unique (u -,  x) (v -, .x)  with r~ <- /u\-unique u v = r~
 
   -- @wenkokke has figured this out
-  cop2 : forall {de om xi : Bwd X}
+  cop-fst : forall {de om xi : Bwd X}
          (th : de <= om)
          (ph : xi <= om)
       -> Cop th ph
 
-  cop2 th ph = cop th ph .fst
+  cop-fst th ph = cop th ph .fst
 
-  -- cannonical grothendieck covering transitivity for left-skip/right-keep
-  -- induction on both inner covering and spine covering
-  -- this is so I can normalise cop2 before implementing cov-groth
-  cov-groth-r-can : forall {ga0 ga1 gal gar gasi : Bwd X}
-                  {ph0 : ga0 <= gal}{ph1 : ga1 <= gal}
-                  {thl : gal <= gasi}{thr : gar <= gasi}
-                  {ps0 : ga0 <= gasi}{ps1 : ga1 <= gasi}
-               -> ph0 /u\ ph1                                  -- inner covering
-               -> thl /u\ thr                                  -- spine covering
-               -> [ ph0 -< thl ]~ ps0                          -- triangle: ph0 . thl = ps0
-               -> [ ph1 -< thl ]~ ps1                          -- triangle: ph1 . thl = ps1
-               -> ps0 /u\ (cop2 ps1 thr) .fst .uuth            -- ps0 covers against the union of ps1 with thr
-
-  cov-groth-r-can [] [] [] [] = []
-
-  cov-groth-r-can rec (c_sp -^, x) (v0 -^ .x) (w0 -^ .x) =
-    cov-groth-r-can rec c_sp v0 w0 -^, x
-
-  cov-groth-r-can (rec -,^ .x) (c_sp -,^ x) (v0 -, .x) (w0 -^, .x) =
-    cov-groth-r-can rec c_sp v0 w0 -,^ x
-
-  cov-groth-r-can (rec -^, .x) (c_sp -,^ x) (v0 -^, .x) (w0 -, .x) =
-    cov-groth-r-can rec c_sp v0 w0 -^, x
-
-  cov-groth-r-can (rec -, .x) (c_sp -,^ x) (v0 -, .x) (w0 -, .x) =
-    cov-groth-r-can rec c_sp v0 w0 -, x
-
-  cov-groth-r-can (rec -,^ .x) (c_sp -, x) (v0 -, .x) (w0 -^, .x) =
-    cov-groth-r-can rec c_sp v0 w0 -, x
-
-  cov-groth-r-can (rec -^, .x) (c_sp -, x) (v0 -^, .x) (w0 -, .x) =
-    cov-groth-r-can rec c_sp v0 w0 -^, x
-
-  cov-groth-r-can (rec -, .x) (c_sp -, x) (v0 -, .x) (w0 -, .x) =
-    cov-groth-r-can rec c_sp v0 w0 -, x
-
-  -- apply cov-groth-r-can to an arbitrary Cop _ _
+  -- show that coverings are transitive for the left-skip/right-keep case
   cov-groth-r : forall {ga0 ga1 gal gar gasi : Bwd X}
               {ph0 : ga0 <= gal}  {ph1 : ga1 <= gal}
               {thl : gal <= gasi} {thr : gar <= gasi}
@@ -81,44 +45,42 @@ module _ {X : Set} where
            -> [ ph0 -< thl ]~ ps0 -> [ ph1 -< thl ]~ ps1
            -> (c : Cop ps1 thr)
            -> ps0 /u\ c .fst .uuth
-  cov-groth-r rec c_sp v0 w0 c
-    with r~ <- unique (cop _ _) {c} {cop2 _ _}
-       = cov-groth-r-can rec c_sp v0 w0
+  -- base case
+  cov-groth-r [] [] [] [] c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _} = []
 
-  -- cannonical transitivity for both-keep
-  -- similar to cov-groth-r, but uses /u\ composed with cop2 on both sides
-  cov-groth-both-can : forall {ga0 ga1 gal gar gasi : Bwd X}
-                       {ph0 : ga0 <= gal}  {ph1 : ga1 <= gal}
-                       {thl : gal <= gasi} {thr : gar <= gasi}
-                       {ps0 : ga0 <= gasi} {ps1 : ga1 <= gasi}
-                    -> ph0 /u\ ph1
-                    -> thl /u\ thr
-                    -> [ ph0 -< thl ]~ ps0
-                    -> [ ph1 -< thl ]~ ps1
-                    -> (cop2 ps0 thr) .fst .uuth /u\ (cop2 ps1 thr) .fst .uuth
+  -- left-keep/right-skip cases
+  cov-groth-r rec (c_sp -^, x) (v0 -^ .x) (w0 -^ .x) c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _}
+       = cov-groth-r rec c_sp v0 w0 (cop-fst _ _) -^, x
 
-  cov-groth-both-can [] [] [] [] = []
+  cov-groth-r (rec -^, .x) (c_sp -,^ x) (v0 -^, .x) (w0 -, .x) c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _}
+       = cov-groth-r rec c_sp v0 w0 (cop-fst _ _) -^, x
 
-  cov-groth-both-can rec (c_sp -^, x) (v0 -^ .x) (w0 -^ .x) =
-    cov-groth-both-can rec c_sp v0 w0 -, x
+  cov-groth-r (rec -^, .x) (c_sp -, x) (v0 -^, .x) (w0 -, .x) c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _}
+       = cov-groth-r rec c_sp v0 w0 (cop-fst _ _) -^, x
 
-  cov-groth-both-can (rec -,^ .x) (c_sp -,^ x) (v0 -, .x) (w0 -^, .x) =
-    cov-groth-both-can rec c_sp v0 w0 -,^ x
+  -- left-skip/right-keep case
+  cov-groth-r (rec -,^ .x) (c_sp -,^ x) (v0 -, .x) (w0 -^, .x) c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _}
+       = cov-groth-r rec c_sp v0 w0 (cop-fst _ _) -,^ x
 
-  cov-groth-both-can (rec -^, .x) (c_sp -,^ x) (v0 -^, .x) (w0 -, .x) =
-    cov-groth-both-can rec c_sp v0 w0 -^, x
+  -- both-keep cases
+  cov-groth-r (rec -, .x) (c_sp -,^ x) (v0 -, .x) (w0 -, .x) c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _}
+       = cov-groth-r rec c_sp v0 w0 (cop-fst _ _) -, x
 
-  cov-groth-both-can (rec -, .x) (c_sp -,^ x) (v0 -, .x) (w0 -, .x) =
-    cov-groth-both-can rec c_sp v0 w0 -, x
+  cov-groth-r (rec -,^ .x) (c_sp -, x) (v0 -, .x) (w0 -^, .x) c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _}
+       = cov-groth-r rec c_sp v0 w0 (cop-fst _ _) -, x
 
-  cov-groth-both-can (rec -,^ .x) (c_sp -, x) (v0 -, .x) (w0 -^, .x) =
-    cov-groth-both-can rec c_sp v0 w0 -, x
-  cov-groth-both-can (rec -^, .x) (c_sp -, x) (v0 -^, .x) (w0 -, .x) =
-    cov-groth-both-can rec c_sp v0 w0 -, x
-  cov-groth-both-can (rec -, .x) (c_sp -, x) (v0 -, .x) (w0 -, .x) =
-    cov-groth-both-can rec c_sp v0 w0 -, x
+  cov-groth-r (rec -, .x) (c_sp -, x) (v0 -, .x) (w0 -, .x) c
+    with r~ <- unique (cop _ _) {c} {cop-fst _ _}
+       = cov-groth-r rec c_sp v0 w0 (cop-fst _ _) -, x
 
-  -- apply cov-groth-both-can to an arbitrary Cop _ _
+  -- show that coverings are transitive for the both-keep case
   cov-groth-both : forall {ga0 ga1 gal gar gasi : Bwd X}
                    {ph0 : ga0 <= gal}  {ph1 : ga1 <= gal}
                    {thl : gal <= gasi} {thr : gar <= gasi}
@@ -127,11 +89,52 @@ module _ {X : Set} where
                 -> [ ph0 -< thl ]~ ps0 -> [ ph1 -< thl ]~ ps1
                 -> (c0 : Cop ps0 thr)(c1 : Cop ps1 thr)
                 -> c0 .fst .uuth /u\ c1 .fst .uuth
-  cov-groth-both rec c_sp v0 w0 c0 c1
-    with r~ <- unique (cop _ _) {c0} {cop2 _ _}  -- normalise c0 to cop2 ps0 thr
-       | r~ <- unique (cop _ _) {c1} {cop2 _ _}  -- normalise c1 to cop2 ps1 thr
-       = cov-groth-both-can rec c_sp v0 w0
 
+  -- base case
+  cov-groth-both [] [] [] [] c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _} = []
+
+
+  -- left-keep/right-skip case
+  cov-groth-both (rec -,^ .x) (c_sp -,^ x) (v0 -, .x) (w0 -^, .x) c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _}
+       = cov-groth-both rec c_sp v0 w0 (cop-fst _ _) (cop-fst _ _) -,^ x
+
+
+  -- left-skip/right-keep case
+  cov-groth-both (rec -^, .x) (c_sp -,^ x) (v0 -^, .x) (w0 -, .x) c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _}
+       = cov-groth-both rec c_sp v0 w0 (cop-fst _ _) (cop-fst _ _) -^, x
+
+
+  -- both-keep cases
+  cov-groth-both rec (c_sp -^, x) (v0 -^ .x) (w0 -^ .x) c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _}
+       = cov-groth-both rec c_sp v0 w0 (cop-fst _ _) (cop-fst _ _) -, x
+
+  cov-groth-both (rec -, .x) (c_sp -,^ x) (v0 -, .x) (w0 -, .x) c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _}
+       = cov-groth-both rec c_sp v0 w0 (cop-fst _ _) (cop-fst _ _) -, x
+
+  cov-groth-both (rec -,^ .x) (c_sp -, x) (v0 -, .x) (w0 -^, .x) c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _}
+       = cov-groth-both rec c_sp v0 w0 (cop-fst _ _) (cop-fst _ _) -, x
+
+  cov-groth-both (rec -^, .x) (c_sp -, x) (v0 -^, .x) (w0 -, .x) c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _}
+       = cov-groth-both rec c_sp v0 w0 (cop-fst _ _) (cop-fst _ _) -, x
+
+  cov-groth-both (rec -, .x) (c_sp -, x) (v0 -, .x) (w0 -, .x) c0 c1
+    with r~ <- unique (cop _ _) {c0} {cop-fst _ _}
+       | r~ <- unique (cop _ _) {c1} {cop-fst _ _}
+       = cov-groth-both rec c_sp v0 w0 (cop-fst _ _) (cop-fst _ _) -, x
 
 -- roof theorem via grothendieck transitivity
 
@@ -179,3 +182,5 @@ module _ {X : Set} (C : Sort X -> X -> Set) where
                (s1 : (_ , th1 , sg) %% br1)
             -> roof s0 u s1 ~ roof-groth s0 u s1
   roof-equiv s0 u s1 = /u\-unique _ _
+
+
